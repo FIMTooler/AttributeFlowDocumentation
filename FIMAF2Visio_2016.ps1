@@ -1,4 +1,4 @@
-﻿#region Functions
+#region Functions
 
 
 #Evaluates inputs and determines if defaults are used
@@ -76,11 +76,13 @@ Function AddNewPageFromTemplate
     {
         #document class is Microsoft.Office.Interop.Visio.DocumentClass
         $Documents = $Application.Documents
+		#Visio 2016
         $Document = $Documents.Add("BASIC_U.VSSX")
         $Document = $Documents.Add("ARROWS_U.VSSX")
-        #BASICD_U.VSTX
+		#Visio 2013 or 2010 ????
+        #$Document = $Documents.Add("BASIC_U.VSS")
+        #Visio 2016 Template BASICD_U.VSTX
         $Document = $Documents.Add("C:\Program Files\Microsoft Office\Office14\Visio Content\1033\BASICD_U.VSTX")
-        #$Document = $Documents.Add("C:\Program Files\Microsoft Office\Office14\Visio Content\1033\FNS.VST") #FNS.VST is Visio Template
         $Document.printlandscape = $true
     }
     Catch
@@ -553,10 +555,10 @@ Function Get-ImportAttributeFlow
 		                    $rule | Add-Member -MemberType noteproperty -name 'RuleType' -value "CONSTANT"
 		                    $rule | Add-Member -MemberType noteproperty -name 'SourceMA' -value $srcMA
 		                    $rule | Add-Member -MemberType noteproperty -name 'CDObjectType' -value $cdObjectType
-							$rule | Add-Member -MemberType noteproperty -name 'CDAttribute' -value $null																						
+							$rule | Add-Member -MemberType noteproperty -name 'CDAttribute' -value $null
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVObjectType' -value $mvObjectType
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVAttribute' -value $mvAttribute
-							$rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $null																						  
+							$rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $null
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceType' -value $precedenceType
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceRank' -value $precedenceRank
 						    $rule | Add-Member -MemberType noteproperty -name 'ConstantValue' -value $constantValue
@@ -1142,9 +1144,14 @@ $AFs = Get-ImportToExportAttributeFlow $FilePath $ObjectFilter #'.\FIM Export Co
 $Application = StartVisio
 AddNewPageFromTemplate
 $BasicStencils = $application.Documents[1]
+#Visio 2016
 $ArrowStencils = $application.Documents[2]
 $RectangleStencil = $BasicStencils.Masters.Item("Rectangle")
 $ArrowStencil = $ArrowStencils.Masters.Item("Simple Arrow")
+#Visio 2010 or 2013 ???
+#$RectangleStencil = $BasicStencils.Masters.Item("Rectangle")
+#$ArrowStencil = $BasicStencils.Masters.Item("45 degree single")
+
 $Pages = $application.ActiveDocument.Pages
 $Page = $Pages.Item(1)
 $Page.AutoSizeDrawing()
