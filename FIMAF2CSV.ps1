@@ -771,6 +771,10 @@ Foreach ($AF in $AFs)
             {
                 $outLine += ",Equal"
             }
+            elseIf ($AF.IAFs[$i].PrecedenceType -eq "manual")
+            {
+                $outLine += ",manual"
+            }
             elseIf ($AF.IAFs[$i].PrecedenceType -eq "ranked")
             {
                 $outLine += "," + $AF.IAFs[$i].PrecedenceRank
