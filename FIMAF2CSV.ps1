@@ -1,4 +1,4 @@
-﻿#region Functions
+#region Functions
 
 
 #Evaluates inputs and determines if defaults are used
@@ -220,7 +220,7 @@ Function Get-ImportAttributeFlow
 		                    $rule | Add-Member -MemberType noteproperty -name 'CDAttribute' -value $srcAttributes
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVObjectType' -value $mvObjectType
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVAttribute' -value $mvAttribute
-						    $rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $scriptContext
+						    $rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $scriptContext.Replace("`"","'")
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceType' -value $precedenceType
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceRank' -value $precedenceRank
 		                                
@@ -241,22 +241,24 @@ Function Get-ImportAttributeFlow
 						      $precedenceRank = $null
 						    }
 						
+		                    $rule = New-Object PSObject
+
 						    if ($importFlow.'sync-rule-mapping'.'mapping-type' -ieq 'expression')
 						    {
 							    $scriptContext = $importFlow.'sync-rule-mapping'.'sync-rule-value'.'import-flow'.InnerXml
+						        $rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $scriptContext
 						    }
 							elseif ($importFlow.'sync-rule-mapping'.'mapping-type' -ieq 'constant')
 							{
-							  $scriptContext = $importFlow.'sync-rule-mapping'.'sync-rule-value'
+                                $constantValue = $importFlow.'sync-rule-mapping'.'sync-rule-value'
+						        $rule | Add-Member -MemberType noteproperty -name 'ConstantValue' -value $constantValue
 							}
-		                    $rule = New-Object PSObject
 		                    $rule | Add-Member -MemberType noteproperty -name 'RuleType' -value $ruleType
 		                    $rule | Add-Member -MemberType noteproperty -name 'SourceMA' -value $srcMA
 		                    $rule | Add-Member -MemberType noteproperty -name 'CDObjectType' -value $cdObjectType
 		                    $rule | Add-Member -MemberType noteproperty -name 'CDAttribute' -value $srcAttributes
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVObjectType' -value $mvObjectType
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVAttribute' -value $mvAttribute
-						    $rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $scriptContext
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceType' -value $precedenceType
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceRank' -value $precedenceRank
 		                                
@@ -283,7 +285,7 @@ Function Get-ImportAttributeFlow
 							$rule | Add-Member -MemberType noteproperty -name 'CDAttribute' -value $null																						
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVObjectType' -value $mvObjectType
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVAttribute' -value $mvAttribute
-							$rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $null																						  
+							$rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $null
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceType' -value $precedenceType
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceRank' -value $precedenceRank
 						    $rule | Add-Member -MemberType noteproperty -name 'ConstantValue' -value $constantValue
@@ -387,7 +389,7 @@ Function Get-ExportAttributeFlow
                             ###
                             ### Handle src-attribute that are intrinsic (<src-attribute intrinsic="true">object-id</src-attribute>)
                             ###
-                            $constant = $exportFlow.'constant-mapping'.'constant-Value'
+                            $constantValue = $exportFlow.'constant-mapping'.'constant-Value'
 		                
 		                    $rule = New-Object PSObject
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'CONSTANT'
@@ -395,7 +397,7 @@ Function Get-ExportAttributeFlow
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'MVObjectType' -Value $mvObjectType
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'CDObjectType' -Value $cdObjectType
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'CDAttribute' -Value $cdAttribute
-						    $rule | Add-Member -MemberType NoteProperty -Name 'ConstantValue' -Value $constant
+						    $rule | Add-Member -MemberType NoteProperty -Name 'ConstantValue' -Value $constantValue
 						    $rule | Add-Member -MemberType NoteProperty -Name 'AllowNulls' -Value $allowNulls
 							$rule | Add-Member -MemberType NoteProperty -Name 'InitialFlowOnly' -Value $initialFlowOnly
 							$rule | Add-Member -MemberType NoteProperty -Name 'IsExistenceTest' -Value $isExistenceTest
@@ -434,7 +436,7 @@ Function Get-ExportAttributeFlow
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'MVAttribute' -Value $srcAttributes
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'CDObjectType' -Value $cdObjectType
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'CDAttribute' -Value $cdAttribute	
-		                    $rule | Add-Member -MemberType NoteProperty -Name 'ScriptContext' -Value $scriptContext
+		                    $rule | Add-Member -MemberType NoteProperty -Name 'ScriptContext' -Value $scriptContext.Replace("`"","'")
 						    $rule | Add-Member -MemberType NoteProperty -Name 'AllowNulls' -Value $allowNulls
 							$rule | Add-Member -MemberType NoteProperty -Name 'InitialFlowOnly' -Value $initialFlowOnly
 							$rule | Add-Member -MemberType NoteProperty -Name 'IsExistenceTest' -Value $isExistenceTest
@@ -486,7 +488,7 @@ Function Get-ExportAttributeFlow
 						    }
                             elseif($exportFlow.'sync-rule-mapping'.'mapping-type' -eq 'constant')
 						    {
-                                $scriptContext = $exportFlow.'sync-rule-mapping'.'sync-rule-value'
+                                $constantValue = $exportFlow.'sync-rule-mapping'.'sync-rule-value'
 							    $rule = New-Object PSObject
 							    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'OSR-Constant'
 							    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName
@@ -497,7 +499,7 @@ Function Get-ExportAttributeFlow
 							    $rule | Add-Member -MemberType NoteProperty -Name 'AllowNulls' -Value $allowNulls
                                 $rule | Add-Member -MemberType NoteProperty -Name 'InitialFlowOnly' -Value $initialFlowOnly
                                 $rule | Add-Member -MemberType NoteProperty -Name 'IsExistenceTest' -Value $isExistenceTest
-							    $rule | Add-Member -MemberType NoteProperty -Name 'ScriptContext' -Value $ScriptContext
+							    $rule | Add-Member -MemberType NoteProperty -Name 'ConstantValue' -Value $constantValue
                                 $rule | Add-Member -MemberType NoteProperty -Name 'SyncRuleID' -Value $syncRuleID
 											
 							    $rules += $rule             
@@ -705,7 +707,7 @@ $AFs = Get-ImportToExportAttributeFlow $FilePath $ObjectFilter #'.\FIM Export Co
 "AFs count is " + $AFs.Count | Write-Host
 #header
 #out-file requires UTF8 encoding for Excel to respect multi-line cells
-"Inbound MA Name,Inbound ObjectType,Inbound Attributes,Inbound Flow Type,Inbound Precedence,MV Attribute,MV ObjectType,Outbound MA Name,Outbound ObjectType,Outbound Attribute,Outbound Allow Nulls,Outbound Flow Type,All MV Attributes used" | Out-File $OutputPath -Append -Encoding utf8
+"Inbound MA Name,Inbound ObjectType,Inbound Attributes,Inbound Flow Type,Inbound Precedence,MV Attribute,MV ObjectType,Outbound MA Name,Outbound ObjectType,Outbound Attribute,Outbound Allow Nulls,Outbound Flow Type,All MV Attributes used,Initial Flow Only" | Out-File $OutputPath -Append -Encoding utf8
 Foreach ($AF in $AFs)
 {
     #Get MVAttributeName
@@ -747,7 +749,7 @@ Foreach ($AF in $AFs)
                 }
                 "CONSTANT".ToLower()
                 {
-                    $outLine += ",CONSTANT - " + $AF.IAFs[$i].ScriptContext
+                    $outLine += ",CONSTANT - " + $AF.IAFs[$i].ConstantValue #$AF.IAFs[$i].ScriptContext
                 }
                 #don't recall if value will be SCRIPTED or EXPRESSION
                 "ISR-SCRIPTED".ToLower()
@@ -764,7 +766,7 @@ Foreach ($AF in $AFs)
                 }
                 "ISR-CONSTANT".ToLower()
                 {
-                    $outLine += ",SyncRule-CONSTANT"
+                    $outLine += ",SyncRule-CONSTANT - " + $AF.IAFs[$i].ConstantValue
                 }
             }
             if ($AF.IAFs[$i].PrecedenceType -eq "equal")
@@ -829,24 +831,19 @@ Foreach ($AF in $AFs)
                 }
                 "CONSTANT".ToLower()
                 {
-                    $outLine += ",CONSTANT - " + $AF.EAFs[$i].ScriptContext
-                }
-                #don't recall if value will be SCRIPTED or EXPRESSION
-                "OSR-SCRIPTED".ToLower()
-                {
-                    $outLine += ",SyncRule-Expression"
+                    $outLine += ",CONSTANT - " + $AF.EAFs[$i].ConstantValue #$AF.EAFs[$i].ScriptContext
                 }
                 "OSR-EXPRESSION".ToLower()
                 {
-                    $outLine += ",SyncRule-Expression"
+                    $outLine += ",SyncRule-Expression,," + $AF.EAFs[$i].InitialFlowOnly
                 }
                 "OSR-DIRECT".ToLower()
                 {
-                    $outLine += ",SyncRule-Direct"
+                    $outLine += ",SyncRule-Direct,," + $AF.EAFs[$i].InitialFlowOnly
                 }
                 "OSR-CONSTANT".ToLower()
                 {
-                    $outLine += ",SyncRule-CONSTANT"
+                    $outLine += ",SyncRule-CONSTANT - " + $AF.EAFs[$i].ConstantValue + ",,"  + $AF.EAFs[$i].InitialFlowOnly
                 }
             }
         }
