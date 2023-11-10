@@ -1,7 +1,9 @@
 # AttributeFlowDocumentation
-Scripts for documenting attributes flows with MIIS/ILM/FIM/MIM
+Scripts for documenting attributes flows with MIIS/ILM/FIM/MIM, Now Azure AD Connnect - AADC
 
 ## Recent Changes
+Using the base of the FIM2AFCSV script, I have now added one for AADC.  The new script is AADCAF2CSV.ps1
+
 AFComparison will compare 2 server exports and attempt to compare the attribute flows between them.  Ideal for comparing Dev and Prod attribute flows.  Fairly new script, but will at least narrow down where possible difference exist so you can manually compare environments in the Sync UI or using FIMAF2CSV.
 
 ## About
