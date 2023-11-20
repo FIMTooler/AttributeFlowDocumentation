@@ -1,4 +1,3 @@
-﻿
 #Evaluates inputs and determines if defaults are used
 Function CheckInputs([ref]$FilePath,[ref]$OutputPath,[ref]$ObjectFilter)
 {
@@ -170,12 +169,19 @@ Function Get-AttributeFlows
                         $expression = $importFlow.expression
                         #get source attributes from expression
                         $srcAttribute = @()
-                        $expressionSplit = $importFlow.expression.Split("[").Split("]")
-                        for ($i=1;$i -lt $expressionSplit.Count;$i+=2)
+                        $expressionSplit = @($expression.Split("[").Split("]"))
+                        for ($i=0;$i -lt $expressionSplit.Count;$i++)
                         {
-                            if ($srcAttribute -notcontains $expressionSplit[$i])
+                            if (($i % 2) -eq 1 -and $srcAttribute -notcontains $expressionSplit[$i])
                             {
                                 $srcAttribute += $expressionSplit[$i]
+                            }
+                            #handle ImportedValue which is parsed different
+                            if ($expressionSplit[$i].contains("ImportedValue"))
+                            {
+                               $temp = $expressionSplit[$i].Substring($expressionSplit[$i].IndexOf("ImportedValue("))
+                               $temp = $temp.Substring($temp.IndexOf('"')+1)
+                               $srcAttribute += $temp.Remove($temp.IndexOf('"'))
                             }
                         }
                         #dest because this in inbound rule
@@ -196,7 +202,7 @@ Function Get-AttributeFlows
                         $expression = $importFlow.expression
                         #get source attributes from expression
                         $mvAttribute = @()
-                        $expressionSplit = $importFlow.expression.Split("[").Split("]")
+                        $expressionSplit = @($expression.Split("[").Split("]"))
                         for ($i=1;$i -lt $expressionSplit.Count;$i+=2)
                         {
                             if ($mvAttribute -notcontains $expressionSplit[$i])
@@ -250,13 +256,14 @@ Function Get-AttributeFlows
 		            $rule | Add-Member -MemberType noteproperty -name 'valueMergeType' -value $valueMergeType
 		            $rule | Add-Member -MemberType noteproperty -name 'enablePasswordSync' -value $enablePasswordSync
 		            $rules += $rule
-                    Clear-Variable ruleType,srcAttribute,mvAttribute,expression,valueMergeType
+                    Clear-Variable ruleType,srcAttribute,mvAttribute,expression,valueMergeType -ErrorAction SilentlyContinue
 		        }
 	        }
         }
 		Write-Output $rules
     }
 }
+
 
 Function Get-ImportToExportAttributeFlow
 {
