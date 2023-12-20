@@ -821,7 +821,7 @@ Foreach ($AF in $AFs)
                     }
                     else
                     {
-                        $Attributes += $AF.EAFs[$i].MVAttribute
+                        $Attributes = $AF.MVAttribute
                     }
                     $outLine += ",`"Code - " + $AF.EAFs[$i].ScriptContext + "`"," + $Attributes
                 }
