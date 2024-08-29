@@ -72,7 +72,7 @@ Function CheckInputs([ref]$FilePath,[ref]$OutputPath,[ref]$ObjectFilter)
 }
 
 <#
-   	.SYNOPSIS 
+   	.SYNOPSIS
    	Gets the Import Attribute Flow Rules from Sync Server Configuration
 
    	.DESCRIPTION
@@ -80,21 +80,21 @@ Function CheckInputs([ref]$FilePath,[ref]$OutputPath,[ref]$ObjectFilter)
 
    	.OUTPUTS
    	PSObjects containing the synchronization server import attribute flow rules
-   
+
    	.EXAMPLE
    	Get-ImportAttributeFlow -ServerConfigurationFolder "E:\ServerConfiguration" | out-gridview
 #>
 Function Get-ImportAttributeFlow
 {
    Param
-   (        
+   (
         [parameter(Mandatory=$false)]
 		[String]
 		[ValidateScript({Test-Path $_})]
 		$ServerConfigurationFolder,
         [String[]]
         $ObjFilter
-   ) 
+   )
    End
    {   	
    		### This is where the rules will be aggregated before we output them
@@ -112,8 +112,8 @@ Function Get-ImportAttributeFlow
 			{
 			   ### Get the MA Name and MA ID
 			   $maName = (select-xml $maFile -XPath "//ma-data/name").Node.InnerText
-			   $maID = (select-xml $maFile -XPath "//ma-data/id").Node.InnerText  
-			   
+			   $maID = (select-xml $maFile -XPath "//ma-data/id").Node.InnerText
+			
 			   $maList.Add($maID,$maName)
 			}
 		}
@@ -127,7 +127,7 @@ Function Get-ImportAttributeFlow
 		###          src-attribute
 		###
 		[xml]$mv = get-content (join-path $ServerConfigurationFolder "MV.xml")
- 
+
 		foreach($importFlowSet in $mv.selectNodes("//import-flow-set"))
 		{
 		    $mvObjectType = $importFlowSet.'mv-object-type'
@@ -135,17 +135,17 @@ Function Get-ImportAttributeFlow
             {
 		        foreach($importFlows in $importFlowSet.'import-flows')
 		        {
-		            $mvAttribute = $importFlows.'mv-attribute'        
+		            $mvAttribute = $importFlows.'mv-attribute'
 				    $precedenceType = $importFlows.type
 				    $precedenceRank = 0
-		           
+		
 		            foreach($importFlow in $importFlows.'import-flow')
 		            {
 		                $cdObjectType = $importFlow.'cd-object-type'
 		                $srcMA = $maList[$importFlow.'src-ma']
 		                $maID = $importFlow.'src-ma'
 		                $maName = $maList[$maID]			
-		                        
+		
 		                if ($importFlow.'direct-mapping' -ne $null)
 		                {
 						    if ($precedenceType -eq 'ranked')
@@ -178,16 +178,16 @@ Function Get-ImportAttributeFlow
 		                    $rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $null
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceType' -value $precedenceType
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceRank' -value $precedenceRank
-		                
-		                    $rules += $rule                               
+		
+		                    $rules += $rule
 		                }
 		                elseif ($importFlow.'scripted-mapping' -ne $null)
-		                {                
-		                    $scriptContext = $importFlow.'scripted-mapping'.'script-context'  
+		                {
+		                    $scriptContext = $importFlow.'scripted-mapping'.'script-context'
 
                             ###
                             ### Handle src-attribute that are intrinsic (<src-attribute intrinsic="true">dn</src-attribute>)
-                            ###              
+                            ###
 		                    $srcAttributes = @()
                             $importFlow.'scripted-mapping'.'src-attribute' | ForEach-Object {
                                 if ($_.intrinsic)
@@ -212,7 +212,7 @@ Function Get-ImportAttributeFlow
 						    {
 						      $precedenceRank = $null
 						    }
-		                
+		
 		                    $rule = New-Object PSObject
 		                    $rule | Add-Member -MemberType noteproperty -name 'RuleType' -value 'SCRIPTED'
 		                    $rule | Add-Member -MemberType noteproperty -name 'SourceMA' -value $srcMA
@@ -223,14 +223,28 @@ Function Get-ImportAttributeFlow
 						    $rule | Add-Member -MemberType noteproperty -name 'ScriptContext' -value $scriptContext.Replace("`"","'")
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceType' -value $precedenceType
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceRank' -value $precedenceRank
-		                                
-		                    $rules += $rule                        
-		                }   
+		
+		                    $rules += $rule
+		                }
 					    elseif ($importFlow.'sync-rule-mapping' -ne $null)
-		                {                
-		                    $scriptContext = $null 
+		                {
+		                    $scriptContext = $null
 						    $ruleType = ("ISR-{0}" -f $importFlow.'sync-rule-mapping'.'mapping-type')
-		                    $srcAttributes = $importFlow.'sync-rule-mapping'.'src-attribute'    
+		                    #$srcAttributes = $importFlow.'sync-rule-mapping'.'src-attribute'
+                            ###
+                            ### Handle src-attribute that are intrinsic (<src-attribute intrinsic="true">dn</src-attribute>)
+                            ###
+		                    $srcAttributes = @()
+                            $importFlow.'sync-rule-mapping'.'src-attribute' | ForEach-Object {
+                                if ($_.intrinsic)
+                                {
+                                    $srcAttributes += "<{0}>" -F $_.'#text'
+                                }
+                                else
+                                {
+		                            $srcAttributes += $_
+                                }
+                            }
 						
 						    if ($precedenceType -eq 'ranked')
 						    {
@@ -261,8 +275,8 @@ Function Get-ImportAttributeFlow
 		                    $rule | Add-Member -MemberType noteproperty -name 'MVAttribute' -value $mvAttribute
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceType' -value $precedenceType
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceRank' -value $precedenceRank
-		                                
-		                    $rules += $rule                        
+		
+		                    $rules += $rule
 		                }
 					    elseif ($importFlow.'constant-mapping' -ne $null)
 					    {
@@ -289,7 +303,7 @@ Function Get-ImportAttributeFlow
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceType' -value $precedenceType
 						    $rule | Add-Member -MemberType noteproperty -name 'PrecedenceRank' -value $precedenceRank
 						    $rule | Add-Member -MemberType noteproperty -name 'ConstantValue' -value $constantValue
-		                                
+		
 		                    $rules += $rule
 					    }
 		            }#foreach($importFlow in $importFlows.'import-flow')
@@ -300,7 +314,7 @@ Function Get-ImportAttributeFlow
    }#End
 }
 <#
-   .SYNOPSIS 
+   .SYNOPSIS
    Gets the Export Attribute Flow Rules from Sync Server Configuration
 
    .DESCRIPTION
@@ -308,7 +322,7 @@ Function Get-ImportAttributeFlow
 
    .OUTPUTS
    PSObjects containing the synchronization server export attribute flow rules
-   
+
    .EXAMPLE
    Get-ExportAttributeFlow -ServerConfigurationFolder "E:\sd\IAM\ITAuthorize\Source\Configuration\FimSync\ServerConfiguration"
 
@@ -316,14 +330,14 @@ Function Get-ImportAttributeFlow
 Function Get-ExportAttributeFlow
 {
    Param
-   (        
+   (
         [parameter(Mandatory=$false)]
 		[String]
 		[ValidateScript({Test-Path $_})]
 		$ServerConfigurationFolder,
         [String[]]
         $ObjFilter
-   ) 
+   )
    End
    {   	
    		### This is where the rules will be aggregated before we output them
@@ -337,12 +351,12 @@ Function Get-ExportAttributeFlow
 		{
 			### Get the MA Name and MA ID
 		   	$maName = (select-xml $maFile -XPath "//ma-data/name").Node.InnerText
-		   
+		
 		    foreach($exportFlowSet in (Select-Xml -path $maFile -XPath "//export-flow-set" | select -ExpandProperty Node))
 		    {
 		        $mvObjectType = $exportFlowSet.'mv-object-type'
 		        $cdObjectType = $exportFlowSet.'cd-object-type'
-		        
+		
                 if ($ObjFilter -eq "*" -or $ObjFilter -contains $mvObjectType)
                 {
 		            foreach($exportFlow in $exportFlowSet.'export-flow')
@@ -369,10 +383,10 @@ Function Get-ExportAttributeFlow
                             {
 		                        $srcAttribute = $exportFlow.'direct-mapping'.'src-attribute'
                             }
-		                
+		
 		                    $rule = New-Object PSObject
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'DIRECT'
-		                    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName                
+		                    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'MVObjectType' -Value $mvObjectType
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'MVAttribute' -Value $srcAttribute
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'CDObjectType' -Value $cdObjectType
@@ -381,7 +395,7 @@ Function Get-ExportAttributeFlow
 						    $rule | Add-Member -MemberType NoteProperty -Name 'AllowNulls' -Value $allowNulls
 							$rule | Add-Member -MemberType NoteProperty -Name 'InitialFlowOnly' -Value $initialFlowOnly
 							$rule | Add-Member -MemberType NoteProperty -Name 'IsExistenceTest' -Value $isExistenceTest
-		                
+		
 		                    $rules += $rule
 		                }
                         if ($exportFlow.'constant-mapping' -ne $null)
@@ -390,10 +404,10 @@ Function Get-ExportAttributeFlow
                             ### Handle src-attribute that are intrinsic (<src-attribute intrinsic="true">object-id</src-attribute>)
                             ###
                             $constantValue = $exportFlow.'constant-mapping'.'constant-Value'
-		                
+		
 		                    $rule = New-Object PSObject
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'CONSTANT'
-		                    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName                
+		                    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'MVObjectType' -Value $mvObjectType
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'CDObjectType' -Value $cdObjectType
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'CDAttribute' -Value $cdAttribute
@@ -402,12 +416,12 @@ Function Get-ExportAttributeFlow
 							$rule | Add-Member -MemberType NoteProperty -Name 'InitialFlowOnly' -Value $initialFlowOnly
 							$rule | Add-Member -MemberType NoteProperty -Name 'IsExistenceTest' -Value $isExistenceTest
                             $rule | Add-Member -MemberType NoteProperty -Name 'SyncRuleID' -Value $syncRuleID
-		                
+		
 		                    $rules += $rule
 		                }
 		                elseif ($exportFlow.'scripted-mapping' -ne $null)
-		                {                
-		                    $scriptContext = $exportFlow.'scripted-mapping'.'script-context'		                
+		                {
+		                    $scriptContext = $exportFlow.'scripted-mapping'.'script-context'		
 						    $srcAttributes = @()
 						
                             ###
@@ -424,11 +438,11 @@ Function Get-ExportAttributeFlow
                                 }
                             }
                             # (Commented) Leave as collection
-                            if ($srcAttributes.Count-eq 1)
+                            if ($srcAttributes.Count -eq 1)
                             {
                                 $srcAttributes = $srcAttributes -as[String]
                             }
-		                    
+		
 		                    $rule = New-Object PSObject
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'SCRIPTED'
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName
@@ -441,13 +455,30 @@ Function Get-ExportAttributeFlow
 							$rule | Add-Member -MemberType NoteProperty -Name 'InitialFlowOnly' -Value $initialFlowOnly
 							$rule | Add-Member -MemberType NoteProperty -Name 'IsExistenceTest' -Value $isExistenceTest
                             $rule | Add-Member -MemberType NoteProperty -Name 'SyncRuleID' -Value $syncRuleID
-		                                
-		                    $rules += $rule                        
+		
+		                    $rules += $rule
 		                }
 					    elseif ($exportFlow.'sync-rule-mapping' -ne $null)
 					    {
                             $syncRuleID = $exportFlow.'sync-rule-mapping'.'sync-rule-id'
-						    $srcAttribute = $exportFlow.'sync-rule-mapping'.'src-attribute'
+
+
+						    #$srcAttribute = $exportFlow.'sync-rule-mapping'.'src-attribute'
+                            ###
+                            ### Handle src-attribute that are intrinsic (<src-attribute intrinsic="true">dn</src-attribute>)
+                            ###
+		                    $srcAttributes = @()
+                            $exportFlow.'sync-rule-mapping'.'src-attribute' | ForEach-Object {
+                                if ($_.intrinsic)
+                                {
+                                    $srcAttributes += "<{0}>" -F $_.'#text'
+                                }
+                                else
+                                {
+		                            $srcAttributes += $_
+                                }
+                            }
+
                             $initialFlowOnly = $exportFlow.'sync-rule-mapping'.'initial-flow-only'
                             $isExistenceTest = $exportFlow.'sync-rule-mapping'.'is-existence-test'
 						    if($exportFlow.'sync-rule-mapping'.'mapping-type' -eq 'direct')
@@ -465,7 +496,7 @@ Function Get-ExportAttributeFlow
                                 $rule | Add-Member -MemberType NoteProperty -Name 'IsExistenceTest' -Value $isExistenceTest
                                 $rule | Add-Member -MemberType NoteProperty -Name 'SyncRuleID' -Value $syncRuleID
 											
-							    $rules += $rule             
+							    $rules += $rule
 						    }
 						    elseif ($exportFlow.'sync-rule-mapping'.'mapping-type' -eq 'expression')
 						    {
@@ -484,7 +515,7 @@ Function Get-ExportAttributeFlow
                                 $rule | Add-Member -MemberType NoteProperty -Name 'IsExistenceTest' -Value $isExistenceTest
                                 $rule | Add-Member -MemberType NoteProperty -Name 'SyncRuleID' -Value $syncRuleID
 											
-							    $rules += $rule             
+							    $rules += $rule
 						    }
                             elseif($exportFlow.'sync-rule-mapping'.'mapping-type' -eq 'constant')
 						    {
@@ -502,27 +533,25 @@ Function Get-ExportAttributeFlow
 							    $rule | Add-Member -MemberType NoteProperty -Name 'ConstantValue' -Value $constantValue
                                 $rule | Add-Member -MemberType NoteProperty -Name 'SyncRuleID' -Value $syncRuleID
 											
-							    $rules += $rule             
+							    $rules += $rule
 						    }
 						    else
 						    {
                                 $exportFlow.'sync-rule-mapping'.'mapping-type' | Write-Host
 							    throw "Unsupported Export Flow type"
 						    }
-			           
 					    }
 		            }
 		        }
             }
 		}
-		
 		Write-Output $rules
    }#End
 }
 Function Get-ImportToExportAttributeFlow
 {
    	Param
-   	(        
+   	(
         [parameter(Mandatory=$true)]
 		[String]
 		[ValidateScript({Test-Path $_})]
@@ -530,12 +559,12 @@ Function Get-ImportToExportAttributeFlow
         [parameter(Mandatory=$true)]
         [String[]]
         $Filter
-   	) 
+   	)
 	End
 	{
 		### Get the Import Attribute Flow Rules
 		$IAFs = Get-ImportAttributeFlow -ServerConfigurationFolder $ServerConfigurationFolder $Filter
-        
+
         ### Add extra property for matching IAFs from different MAs
         ### Used to prevent duplicating IAFs that were previously matched
         Foreach ($IAF in $IAFs)
@@ -579,7 +608,7 @@ Function Get-ImportToExportAttributeFlow
                 $e2eAF | Add-Member -MemberType "NoteProperty" -Name "MVObjectType" -Value $IAF.MVObjectType
                 $e2eAF | Add-Member -MemberType "NoteProperty" -Name "MVAttribute" -Value $IAF.MVAttribute
                 $iafArray += ($IAF | select * -ExcludeProperty MVObjectType,MVAttribute,Matched)
-                
+
                 ### get matching IAFs
                 $iafMatches = @($IAFs | where {$_.'MVAttribute' -contains $IAF.'MVAttribute' -and $_.'MVObjectType' -eq $IAF.'MVObjectType' -and $_.'Matched' -eq $false})
                 if ($iafMatches.Count -gt 0)
@@ -593,7 +622,7 @@ Function Get-ImportToExportAttributeFlow
                     }
                 }
 
-		        ### Look for a matchinging EAF rule    
+		        ### Look for a matchinging EAF rule
 		        $eafMatches = @($EAFs | where {$_.'MVAttribute' -contains $IAF.'MVAttribute' -and $_.'MVObjectType' -eq $IAF.'MVObjectType'})
 		        if ($eafMatches.count -gt 0)
 		        {
@@ -613,7 +642,7 @@ Function Get-ImportToExportAttributeFlow
                         }
 		            }
 		        }
-			    
+			
                 ### if arrays have objects add them to PSObject
                 if ($iafArray.Length -gt 0)
                 {
@@ -634,10 +663,10 @@ Function Get-ImportToExportAttributeFlow
         {
             ### Create empty array for EAF
             $eafArray = @()
-            
+
             ### Create new PSObject for eafArray
             $e2eAF = New-Object PSObject
-            
+
             ### Update Matched and add EAF to array
             $EAF.Matched = $true
             $e2eAF | Add-Member -MemberType "NoteProperty" -Name "MVObjectType" -Value $EAF.MVObjectType
@@ -652,10 +681,10 @@ Function Get-ImportToExportAttributeFlow
             {
                 $eafArray += ($EAF | select * -ExcludeProperty MVObjectType,MVAttribute,Matched)
             }
-            
+
             ### Add array to PSObject
             $e2eAF | Add-Member -MemberType "NoteProperty" -Name "EAFs" -Value $eafArray
-            
+
             ### Add PSObject to array for output
             $e2eFlowRules += $e2eAF
         }
