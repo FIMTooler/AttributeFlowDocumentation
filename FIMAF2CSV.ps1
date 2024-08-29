@@ -150,11 +150,11 @@ Function Get-ImportAttributeFlow
 		                {
 						    if ($precedenceType -eq 'ranked')
 						    {
-						     $precedenceRank += 1
+                                $precedenceRank += 1
 						    }
 						    else
 						    {
-						     $precedenceRank = $null
+                                $precedenceRank = $null
 						    }
 					
                             ###
@@ -194,15 +194,15 @@ Function Get-ImportAttributeFlow
                                 {
                                     $srcAttributes += "<{0}>" -F $_.'#text'
                                 }
-                                else
+                                elseif ($_) # Do not add empty values.
                                 {
 		                            $srcAttributes += $_
                                 }
                             }
-                            if ($srcAttributes.Count -eq 1)
-                            {
-                                $srcAttributes = $srcAttributes -as [String]
-                            }
+                            #if ($srcAttributes.Count -eq 1)
+                            #{
+                            #    $srcAttributes = $srcAttributes -as [String]
+                            #}
 						
 						    if ($precedenceType -eq 'ranked')
 						    {
@@ -438,10 +438,10 @@ Function Get-ExportAttributeFlow
                                 }
                             }
                             # (Commented) Leave as collection
-                            if ($srcAttributes.Count -eq 1)
-                            {
-                                $srcAttributes = $srcAttributes -as[String]
-                            }
+                            #if ($srcAttributes.Count -eq 1)
+                            #{
+                            #    $srcAttributes = $srcAttributes -as[String]
+                            #}
 		
 		                    $rule = New-Object PSObject
 		                    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'SCRIPTED'
@@ -462,8 +462,7 @@ Function Get-ExportAttributeFlow
 					    {
                             $syncRuleID = $exportFlow.'sync-rule-mapping'.'sync-rule-id'
 
-
-						    #$srcAttribute = $exportFlow.'sync-rule-mapping'.'src-attribute'
+						    #$srcAttributes = $exportFlow.'sync-rule-mapping'.'src-attribute'
                             ###
                             ### Handle src-attribute that are intrinsic (<src-attribute intrinsic="true">dn</src-attribute>)
                             ###
@@ -473,12 +472,11 @@ Function Get-ExportAttributeFlow
                                 {
                                     $srcAttributes += "<{0}>" -F $_.'#text'
                                 }
-                                else
+                                elseif ($_) # Do not add empty values.
                                 {
 		                            $srcAttributes += $_
                                 }
                             }
-
                             $initialFlowOnly = $exportFlow.'sync-rule-mapping'.'initial-flow-only'
                             $isExistenceTest = $exportFlow.'sync-rule-mapping'.'is-existence-test'
 						    if($exportFlow.'sync-rule-mapping'.'mapping-type' -eq 'direct')
@@ -487,7 +485,7 @@ Function Get-ExportAttributeFlow
 							    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'OSR-Direct'
 							    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName
 							    $rule | Add-Member -MemberType NoteProperty -Name 'MVObjectType' -Value $mvObjectType
-							    $rule | Add-Member -MemberType NoteProperty -Name 'MVAttribute' -Value $srcAttribute
+							    $rule | Add-Member -MemberType NoteProperty -Name 'MVAttribute' -Value $srcAttributes
 							    $rule | Add-Member -MemberType NoteProperty -Name 'CDObjectType' -Value $cdObjectType
 							    $rule | Add-Member -MemberType NoteProperty -Name 'CDAttribute' -Value $cdAttribute
 								$rule | Add-Member -MemberType NoteProperty -Name 'ScriptContext' -Value $null
@@ -506,7 +504,7 @@ Function Get-ExportAttributeFlow
 							    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'OSR-Expression'
 							    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName
 							    $rule | Add-Member -MemberType NoteProperty -Name 'MVObjectType' -Value $mvObjectType
-							    $rule | Add-Member -MemberType NoteProperty -Name 'MVAttribute' -Value $srcAttribute
+							    $rule | Add-Member -MemberType NoteProperty -Name 'MVAttribute' -Value $srcAttributes
 							    $rule | Add-Member -MemberType NoteProperty -Name 'CDObjectType' -Value $cdObjectType
 							    $rule | Add-Member -MemberType NoteProperty -Name 'CDAttribute' -Value $cdAttribute														
 							    $rule | Add-Member -MemberType NoteProperty -Name 'ScriptContext' -Value $scriptContext
@@ -524,7 +522,7 @@ Function Get-ExportAttributeFlow
 							    $rule | Add-Member -MemberType NoteProperty -Name 'RuleType' -Value 'OSR-Constant'
 							    $rule | Add-Member -MemberType NoteProperty -Name 'MAName' -Value $maName
 							    $rule | Add-Member -MemberType NoteProperty -Name 'MVObjectType' -Value $mvObjectType
-							    $rule | Add-Member -MemberType NoteProperty -Name 'MVAttribute' -Value $srcAttribute
+							    $rule | Add-Member -MemberType NoteProperty -Name 'MVAttribute' -Value $srcAttributes
 							    $rule | Add-Member -MemberType NoteProperty -Name 'CDObjectType' -Value $cdObjectType
 							    $rule | Add-Member -MemberType NoteProperty -Name 'CDAttribute' -Value $cdAttribute
 							    $rule | Add-Member -MemberType NoteProperty -Name 'AllowNulls' -Value $allowNulls
@@ -864,7 +862,21 @@ Foreach ($AF in $AFs)
                 }
                 "OSR-EXPRESSION".ToLower()
                 {
-                    $outLine += ",SyncRule-Expression,," + $AF.EAFs[$i].InitialFlowOnly
+                    if ($AF.EAFs[$i].MVAttribute.Count -gt 1)
+                    {
+                        $Attributes = "`""
+                        foreach ($str in $AF.EAFs[$i].MVAttribute)
+                        {
+                            $Attributes += $str + "`n"
+                        }
+                        $Attributes = $Attributes.TrimEnd("`n")
+                        $Attributes += "`""
+                    }
+                    else
+                    {
+                        $Attributes = $AF.MVAttribute
+                    }
+                    $outLine += ",SyncRule-Expression," + $Attributes + "," + $AF.EAFs[$i].InitialFlowOnly
                 }
                 "OSR-DIRECT".ToLower()
                 {
